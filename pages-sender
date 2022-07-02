@@ -1,0 +1,50 @@
+#!/bin/bash
+
+config_file="$HOME/.config/pages_sender/pages_sender.conf"
+
+function check_book_is_exist() {
+	path_of_book=$(grep -v '^#' $config_file | grep path_of_book | cut -d"=" -f 2)
+	if [[ -z $(ls $path_of_book) ]]; then
+		echo "gi"
+		curl -F "chat_id=$ch_id" -F "text=please sir enter the correct path of your book" https://api.telegram.org/bot$bot_token/sendMessage
+		exit
+	else
+		book=$path_of_book
+	fi
+}
+
+function sendbook(){
+	DATE=$(date +%m"-"%d"-"%y)
+	qpdf $book --pages . $pages-$today_pages -- /tmp/10-pages-$DATE.pdf
+    sed -i "s/pages=$pages/pages=$today_pages/" $config_file
+    pages_of_book=$(strings < $book | sed -n 's|.*/Count -\{0,1\}\([0-9]\{1,\}\).*|\1|p' | sort -rn | head -n 1)
+    percentage=$((100*$today_pages/$pages_of_book))
+    curl -F "chat_id=$ch_id" -F "document=@/tmp/$today_pages-pages.pdf" https://api.telegram.org/bot$bot_token/sendDocument
+    rm /tmp/*.pdf
+}
+
+
+function mainprogram() {
+	bot_token=$(grep -v '^#' $config_file | grep bot_token | cut -d"=" -f 2)
+	ch_id=$(grep -v '^#' $config_file | grep ch_id | cut -d"=" -f 2)
+	check_book_is_exist
+	pages=$(grep -v '^#' $config_file | grep pages | cut -d"=" -f 2)
+	today_pages=$(($pages+10))
+	if [[ $today_pages == $pages ]];then
+		sendbook
+		curl -F "chat_id=$ch_id" -F "text=تهانينا، لقد أكملت قراءة الكتاب يا صديقي. تذكر: قارئ اليوم، قائدُ الغد 😎" https://api.telegram.org/bot$bot_token/sendMessage
+		sed -i "s/path_of_book=$book/path_of_book=none/" $config_file
+	fi
+        pages_of_book=$(strings < $book | sed -n 's|.*/Count -\{0,1\}\([0-9]\{1,\}\).*|\1|p' | sort -rn | head -n 1)
+	if [[ $today_pages -gt $(( $pages_of_book - 1 )) ]];then
+		today_pages=$(( $today_pages - $(($today_pages - $pages_of_book)) ))
+		sendbook
+		curl -F "chat_id=$ch_id" -F "text=تهانينا، لقد أكملت قراءة الكتاب يا صديقي. تذكر: قارئ اليوم، قائدُ الغد 😎" https://api.telegram.org/bot$bot_token/sendMessage
+		sed -i "s/path_of_book=$book/path_of_book=none/" $config_file
+	else
+		sendbook
+  curl -F "chat_id=$ch_id" -F 
+"text=عند قراءتك لِلصفحات التالية ستكون قد قرأت $percentage بالمائة من الكتاب، أي ما يُعادل $today_pages صفحة." https://api.telegram.org/bot$bot_token/sendMessage
+	fi
+	}
+mainprogram
