@@ -23,7 +23,7 @@ The configuration are in the file: `pages_sender.conf` for modification.  The va
 Put your bot's token in place of none after the equal sign, and channel ID in place of none, put the book's path in its variable after the equal sign as well, and make sure that after the equal sign is completely glued to it.
 
 
-This is a example about my confirmation file: 
+This is a example about my configuration file: 
 
 ```
 
