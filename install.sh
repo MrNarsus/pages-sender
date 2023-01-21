@@ -8,11 +8,11 @@ if [[ $(id -u) -eq 0 ]];then
 else
 	printf "Run me as root \n"
 	exit 0
-
+fi
 cp pages-sender /bin/pages-sender
 chmod 775 /bin/pages-sender
 
 crontab -l > out
-echo 00 09 * * 1-5 pages-sender" >> out
+echo "00 09 * * 1-5 pages-sender" >> out
 crontab out
 rm out
